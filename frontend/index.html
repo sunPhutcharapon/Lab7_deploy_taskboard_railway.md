@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Board - N-Tier Docker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>📋 Task Board</h1>
+            <p class="subtitle">N-Tier Architecture with Docker (Version 2)</p>
+            <div class="stats" id="stats">
+                <span class="stat-item">📊 Loading...</span>
+            </div>
+        </header>
+
+        <!-- Add Task Form -->
+        <section class="add-task-section">
+            <h2>➕ Add New Task</h2>
+            <form id="taskForm" class="task-form">
+                <div class="form-group">
+                    <label for="title">Title *</label>
+                    <input type="text" id="title" name="title" required 
+                           placeholder="Enter task title" maxlength="200">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" 
+                              placeholder="Enter task description"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            <option value="TODO">📝 TODO</option>
+                            <option value="IN_PROGRESS">🔄 In Progress</option>
+                            <option value="DONE">✅ Done</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority">
+                            <option value="LOW">🟢 Low</option>
+                            <option value="MEDIUM" selected>🟡 Medium</option>
+                            <option value="HIGH">🔴 High</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Task</button>
+            </form>
+        </section>
+
+        <!-- Task Board -->
+        <section class="board-section">
+            <h2>📌 Task Board</h2>
+            <div class="board" id="board">
+                <div class="column" id="todo-column">
+                    <h3>📝 TODO</h3>
+                    <div class="task-list" id="todo-list"></div>
+                </div>
+                <div class="column" id="progress-column">
+                    <h3>🔄 In Progress</h3>
+                    <div class="task-list" id="progress-list"></div>
+                </div>
+                <div class="column" id="done-column">
+                    <h3>✅ Done</h3>
+                    <div class="task-list" id="done-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>ENGSE207 Software Architecture - Week 6 Docker Version</p>
+            <p>🐳 Powered by Docker Containers</p>
+        </footer>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+# ============================================
+# Docker Compose - N-Tier Architecture
+# ENGSE207 - Week 6 Docker Version
+# ============================================
+# 
+# Services:
+# 1. db     - PostgreSQL Database
+# 2. api    - Node.js Backend API
+# 3. nginx  - Web Server & Reverse Proxy
+#
+# Usage:
+#   docker compose up -d      # Start all services
+#   docker compose down       # Stop all services
+#   docker compose logs -f    # View logs
+# ============================================
+
+#version: '3.8'
+
+services:
+  # ============================================
+  # Database Service - PostgreSQL
+  # ============================================
+  db:
+    image: postgres:16-alpine
+    container_name: taskboard-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-taskboard_db}
+      POSTGRES_USER: ${POSTGRES_USER:-taskboard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskboard123}
+    volumes:
+      # Persistent data storage
+      - postgres_data:/var/lib/postgresql/data
+      # Initialization scripts (run once on first start)
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-taskboard} -d ${POSTGRES_DB:-taskboard_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - taskboard-network
+    # Only expose port for debugging (optional)
+    # ports:
+    #   - "5432:5432"
+
+  # ============================================
+  # API Service - Node.js Backend
+  # ============================================
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: taskboard-api
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=${PORT:-3000}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-taskboard_db}
+      - DB_USER=${DB_USER:-taskboard}
+      - DB_PASSWORD=${DB_PASSWORD:-taskboard123}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://localhost}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - taskboard-network
+    # Only expose port for debugging (optional)
+    # ports:
+    #   - "3000:3000"
+
+  # ============================================
+  # Nginx Service - Web Server & Reverse Proxy
+  # ============================================
+  nginx:
+    image: nginx:alpine
+    container_name: taskboard-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Nginx configuration
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # SSL certificates
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      # Frontend static files
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - taskboard-network
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  taskboard-network:
+    driver: bridge
+    name: taskboard-network
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres_data:
+    name: taskboard-postgres-data
